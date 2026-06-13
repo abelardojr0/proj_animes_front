@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo de Animes</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#121212;
+    color:white;
+    padding:30px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+}
+
+.formulario{
+    background:#1e1e1e;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:30px;
+}
+
+.formulario input{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border:none;
+    border-radius:5px;
+}
+
+.formulario button{
+    width:100%;
+    padding:12px;
+    background:#00c853;
+    color:white;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.formulario button:hover{
+    background:#00a844;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:#1e1e1e;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.card img{
+    width:100%;
+    height:350px;
+    object-fit:cover;
+}
+
+.card-content{
+    padding:15px;
+}
+
+.card h2{
+    margin-bottom:10px;
+}
+
+.card p{
+    margin-bottom:8px;
+}
+
+.botoes{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+
+.editar{
+    flex:1;
+    background:#2196f3;
+}
+
+.deletar{
+    flex:1;
+    background:#f44336;
+}
+
+.botoes button{
+    border:none;
+    color:white;
+    padding:10px;
+    border-radius:5px;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🎌 Catálogo de Animes</h1>
+
+    <div class="formulario">
+        <input type="hidden" id="id">
+
+        <input type="text" id="titulo" placeholder="Título">
+
+        <input type="text" id="genero" placeholder="Gênero">
+
+        <input type="text" id="protagonista" placeholder="Protagonista">
+
+        <input type="text" id="url_img" placeholder="URL da imagem">
+
+        <button onclick="salvarAnime()">Salvar Anime</button>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+</div>
+
+<script>
+
+const API = "https://proj-animes-back.onrender.com/animes";
+
+buscarAnimes();
+
+async function buscarAnimes(){
+
+    const resposta = await fetch(API);
+    const animes = await resposta.json();
+
+    const cards = document.getElementById("cards");
+
+    cards.innerHTML = "";
+
+    animes.forEach(anime => {
+
+        cards.innerHTML += `
+            <div class="card">
+
+                <img src="${anime.url_img}" alt="${anime.titulo}">
+
+                <div class="card-content">
+
+                    <h2>${anime.titulo}</h2>
+
+                    <p><strong>Gênero:</strong> ${anime.genero}</p>
+
+                    <p><strong>Protagonista:</strong> ${anime.protagonista}</p>
+
+                    <div class="botoes">
+                        <button class="editar"
+                            onclick='preencherFormulario(${JSON.stringify(anime)})'>
+                            Editar
+                        </button>
+
+                        <button class="deletar"
+                            onclick='deletarAnime(${anime.id})'>
+                            Excluir
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+    });
+}
+
+async function salvarAnime(){
+
+    const id = document.getElementById("id").value;
+
+    const anime = {
+        titulo: document.getElementById("titulo").value,
+        genero: document.getElementById("genero").value,
+        protagonista: document.getElementById("protagonista").value,
+        url_img: document.getElementById("url_img").value
+    };
+
+    if(id){
+
+        await fetch(`${API}/${id}`,{
+            method:"PUT",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(anime)
+        });
+
+        alert("Anime atualizado!");
+
+    }else{
+
+        await fetch(API,{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify(anime)
+        });
+
+        alert("Anime cadastrado!");
+    }
+
+    limparFormulario();
+    buscarAnimes();
+}
+
+function preencherFormulario(anime){
+
+    document.getElementById("id").value = anime.id;
+    document.getElementById("titulo").value = anime.titulo;
+    document.getElementById("genero").value = anime.genero;
+    document.getElementById("protagonista").value = anime.protagonista;
+    document.getElementById("url_img").value = anime.url_img;
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+}
+
+async function deletarAnime(id){
+
+    const confirmar = confirm("Deseja realmente excluir este anime?");
+
+    if(!confirmar) return;
+
+    await fetch(`${API}/${id}`,{
+        method:"DELETE"
+    });
+
+    alert("Anime deletado!");
+    buscarAnimes();
+}
+
+function limparFormulario(){
+
+    document.getElementById("id").value = "";
+    document.getElementById("titulo").value = "";
+    document.getElementById("genero").value = "";
+    document.getElementById("protagonista").value = "";
+    document.getElementById("url_img").value = "";
+}
+
+</script>
+
+</body>
+</html>
